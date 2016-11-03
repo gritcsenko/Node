@@ -1,11 +1,13 @@
 #include <Arduino.h>
 #include <ArduinoOTA.h>
 #include <SPI.h>
+#include <Wire.h>
 #include <SD.h>
 
 #include <ESP8266mDNS.h>
 
 #include <SI7021.h>
+#include <Adafruit_BMP085.h>
 
 #include "..\lib\Storage\Storage.h"
 #include "..\lib\Settings\Settings.h"
@@ -18,6 +20,7 @@ byte co2request[9] =  { 0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79 };
 byte co2response[9];
 
 SI7021 sensor;
+Adafruit_BMP085 bmp;
 
 void setup() {
 
@@ -57,6 +60,12 @@ void setup() {
     Serial.println("NOT found");
   }
 
+  Serial.print("Initializing BMP085/BMP180 sensor... ");
+  if (bmp.begin()) {
+    Serial println("Ok");
+  }else{
+    Serial.println("Could not find a valid BMP085/BMP180 sensor");
+  }
 
   Serial.println("Setup complete");
 }
@@ -98,8 +107,12 @@ void loop() {
   si7021_thc thc = sensor.getTempAndRH();
   Serial.print("Temp: "); Serial.print(thc.celsiusHundredths / 100.0);
   Serial.print("\tHum: "); Serial.println(thc.humidityPercent);
-  Serial.flush();
 
+  int32_t pressure = bmp.readPressure();
+  Serial.print("Temp: "); Serial.print(bmp.readTemperature()); // Celsius
+  Serial.print("\tPressure: "); Serial.println(pressure); // Pascals
+
+  Serial.flush();
   size_t count = 0;
   while (count < 9) {
     delay(50);
