@@ -84,38 +84,37 @@ bool SyncTime()
     Serial.print("Current RTC time: ");
     displayTime();
     return true;
-  }else{
-    Serial.println("Syncing time...");
-
-    timeClient.begin();
-    int tries = 0;
-    while(true) {
-      tries++;
-      if(tries > MaxTries){
-        break;
-      }
-      Serial.println("Updating NTP time...");
-      if(timeClient.forceUpdate()){
-        break;
-      }
-      delay(1000);
-    }
-    if(tries > MaxTries){
-      Serial.println("Failed to update NTP time");
-      setSyncProvider(RTC.get);
-      Serial.print("Current RTC time: ");
-      displayTime();
-      return true;
-    }
-
-    Serial.print("Got NTP time: ");
-
-    time_t ntpTime = timeClient.getEpochTime();
-    setTime(ntpTime);
-    tmElements_t tm;
-    breakTime(ntpTime, tm);
-    displayTime(tm);
   }
+  Serial.println("Syncing time...");
+
+  timeClient.begin();
+  int tries = 0;
+  while(true) {
+    tries++;
+    if(tries > MaxTries){
+      break;
+    }
+    Serial.println("Updating NTP time...");
+    if(timeClient.forceUpdate()){
+      break;
+    }
+    delay(1000);
+  }
+  if(tries > MaxTries){
+    Serial.println("Failed to update NTP time");
+    setSyncProvider(RTC.get);
+    Serial.print("Current RTC time: ");
+    displayTime();
+    return true;
+  }
+
+  Serial.print("Got NTP time: ");
+
+  time_t ntpTime = timeClient.getEpochTime();
+  setTime(ntpTime);
+  tmElements_t tm;
+  breakTime(ntpTime, tm);
+  displayTime(tm);
 
   tries = 0;
   while(true) {
