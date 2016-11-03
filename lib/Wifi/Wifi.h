@@ -13,6 +13,7 @@ bool InitWifi()
 
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.println("Connection Failed!");
+    WiFi.mode(WIFI_OFF);
     return false;
   }
 

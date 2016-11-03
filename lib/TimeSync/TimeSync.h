@@ -72,6 +72,8 @@ uint8_t dec2bcd(uint8_t n)
     return n + 6 * (n / 10);
 }
 
+#define MaxTries 3
+
 bool SyncTime()
 {
   Serial.println("Syncing time...");
@@ -80,7 +82,7 @@ bool SyncTime()
   int tries = 0;
   while(true) {
     tries++;
-    if(tries > 10){
+    if(tries > MaxTries){
       break;
     }
     Serial.println("Updating NTP time...");
@@ -89,7 +91,7 @@ bool SyncTime()
     }
     delay(1000);
   }
-  if(tries > 10){
+  if(tries > MaxTries){
     Serial.println("Failed to update NTP time");
     setSyncProvider(RTC.get);
     Serial.print("Current RTC time: ");
@@ -110,7 +112,7 @@ bool SyncTime()
   tries = 0;
   while(true) {
     tries++;
-    if(tries > 10){
+    if(tries > MaxTries){
       break;
     }
 
@@ -123,7 +125,7 @@ bool SyncTime()
     delay(1000);
     breakTime(now(), tm);
   }
-  if(tries > 10){
+  if(tries > MaxTries){
     Serial.println("Failed to update RTC time");
     setSyncProvider(getNtpTime);
   }else{
