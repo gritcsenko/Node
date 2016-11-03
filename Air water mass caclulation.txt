@@ -1,7 +1,7 @@
 Constants
- V[m³]	      1.0000
- Rv	          461.5000
- P0[gecto Pa]  1.0016  # normal at seal level
+ V[m³]        1.0000
+ Rv           461.5000
+ P0[gecto Pa] 1.0016  # normal at seal level
 
 Variables
  P[gecto Pa]
