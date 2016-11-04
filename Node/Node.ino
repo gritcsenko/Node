@@ -62,7 +62,7 @@ void setup() {
 
   Serial.print("Initializing BMP085/BMP180 sensor... ");
   if (bmp.begin()) {
-    Serial println("Ok");
+    Serial.println("Ok");
   }else{
     Serial.println("Could not find a valid BMP085/BMP180 sensor");
   }
@@ -105,14 +105,30 @@ void loop() {
   Serial.print("Timer Temp: "); Serial.println(RTC.temperature()/4.0);
 
   si7021_thc thc = sensor.getTempAndRH();
-  Serial.print("Temp: "); Serial.print(thc.celsiusHundredths / 100.0);
-  Serial.print("\tHum: "); Serial.println(thc.humidityPercent);
+  double t = thc.celsiusHundredths / 100.0;
+  double RH = thc.humidityPercent;
+  Serial.print("Temp: "); Serial.print(t);
+  Serial.print("\tHum: "); Serial.println(RH);
 
-  int32_t pressure = bmp.readPressure();
+  int32_t P = bmp.readPressure() / 100000.0;
   Serial.print("Temp: "); Serial.print(bmp.readTemperature()); // Celsius
-  Serial.print("\tPressure: "); Serial.println(pressure); // Pascals
+  Serial.print("\tPressure: "); Serial.println(P); // Gecto Pascals
+
+  double V = 1.0;
+  double Rv = 461.5;
+  double P0 = 1.0016;
+
+  double T = 273.15 + t;
+  double e_omega = 6.112*exp((17.62*T - 4812.903)/(T - 30.03));
+  double f = P0 + 0.00000315*P - 0.074/P;
+  double e = RH*e_omega*f;
+  double AH = e/(Rv*T);
+  double m = AH*V*1000000.0;
+
+  Serial.print("Water mass[mg]: "); Serial.println(m);
 
   Serial.flush();
+
   size_t count = 0;
   while (count < 9) {
     delay(50);
