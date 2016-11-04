@@ -116,11 +116,10 @@ void loop() {
 
   double V = 1.0;
   double Rv = 461.5;
-  double P0 = 1.0016;
 
   double T = 273.15 + t;
   double e_omega = 6.112*exp((17.62*T - 4812.903)/(T - 30.03));
-  double f = P0 + 0.00000000315*P - 74/P;
+  double f = 1.0016 + 0.00000315*P - 0.074/P;
   double e = RH*e_omega*f;
   double AH = e/(Rv*T);
   double m = AH*V*1000.0;
