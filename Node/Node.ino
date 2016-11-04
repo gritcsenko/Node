@@ -110,7 +110,7 @@ void loop() {
   Serial.print("Temp: "); Serial.print(t);
   Serial.print("\tHum: "); Serial.println(RH);
 
-  int32_t P = bmp.readPressure() / 100000.0;
+  double P = bmp.readPressure() / 100.0;
   Serial.print("Temp: "); Serial.print(bmp.readTemperature()); // Celsius
   Serial.print("\tPressure: "); Serial.println(P); // Gecto Pascals
 
@@ -120,12 +120,12 @@ void loop() {
 
   double T = 273.15 + t;
   double e_omega = 6.112*exp((17.62*T - 4812.903)/(T - 30.03));
-  double f = P0 + 0.00000315*P - 0.074/P;
+  double f = P0 + 0.00000000315*P - 74/P;
   double e = RH*e_omega*f;
   double AH = e/(Rv*T);
-  double m = AH*V*1000000.0;
+  double m = AH*V*1000.0;
 
-  Serial.print("Water mass[mg]: "); Serial.println(m);
+  Serial.print("Water mass[g]: "); Serial.println(m);
 
   Serial.flush();
 
