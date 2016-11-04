@@ -106,7 +106,7 @@ void loop() {
 
   si7021_thc thc = sensor.getTempAndRH();
   double t = thc.celsiusHundredths / 100.0;
-  double RH = thc.humidityPercent;
+  int RH = thc.humidityPercent;
   Serial.print("Temp: "); Serial.print(t);
   Serial.print("\tHum: "); Serial.println(RH);
 
@@ -120,11 +120,11 @@ void loop() {
   double T = 273.15 + t;
   double e_omega = 6.112*exp((17.62*T - 4812.903)/(T - 30.03));
   double f = 1.0016 + 0.00000315*P - 0.074/P;
-  double e = RH*e_omega*f;
+  double e = RH*e_omega*f/100;
   double AH = e/(Rv*T);
-  double m = AH*V*1000.0;
+  double m = AH*V*1000000.0;
 
-  Serial.print("Water mass[g]: "); Serial.println(m);
+  Serial.print("Water mass[mg]: "); Serial.println(m);
 
   Serial.flush();
 
