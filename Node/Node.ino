@@ -9,15 +9,13 @@
 #include <SI7021.h>
 #include <Adafruit_BMP085.h>
 
+#include "..\lib\CO2\CO2.h"
 #include "..\lib\Storage\Storage.h"
 #include "..\lib\Settings\Settings.h"
 #include "..\lib\OTA\OTA.h"
 #include "..\lib\Wifi\Wifi.h"
 #include "..\lib\TimeSync\TimeSync.h"
 #include "..\lib\NRF\NRF.h"
-
-byte co2request[9] =  { 0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79 };
-byte co2response[9];
 
 SI7021 sensor;
 Adafruit_BMP085 bmp;
@@ -118,56 +116,24 @@ void loop() {
   double Rv = 461.5;
 
   double T = 273.15 + t;
-  double e_omega = 6.112*exp((17.62*T - 4812.903)/(T - 30.03));
+  double e_omega_t = 6.112*exp((17.62*T - 4812.903)/(T - 30.03));
   double f = 1.0016 + 0.00000315*P - 0.074/P;
-  double e = RH*e_omega*f/100;
+  double e_omega = e_omega_t*f;
+  Serial.print("e omega[hPa]: "); Serial.println(e_omega);
+  double e = RH*e_omega/100;
   double AH = e/(Rv*T);
   double m = AH*V*1000000.0;
 
   Serial.print("Water mass[mg]: "); Serial.println(m);
 
-  Serial.flush();
-
-  size_t count = 0;
-  while (count < 9) {
-    delay(50);
-    Serial.pins(2, 3);
-    delay(50);
-    Serial.write(co2request, 9);
-    Serial.flush();
-    memset(co2response, 0, 9);
-    count = Serial.readBytes(co2response, 9);
-    delay(50);
-    Serial.pins(1, 3);
-    delay(50);
-  }
-
-  int i;
-  byte crc = 0;
-  for (i = 1; i < 8; i++) crc+=co2response[i];
-  crc = 255 - crc;
-  crc++;
-
-  if ( !(co2response[0] == 0xFF && co2response[1] == 0x86 && co2response[8] == crc) ) {
-    Serial.print("0x");
-    Serial.print(co2response[0],HEX);
-    Serial.print(co2response[1],HEX);
-    Serial.print(co2response[2],HEX);
-    Serial.print(co2response[3],HEX);
-    Serial.print(co2response[4],HEX);
-    Serial.print(co2response[5],HEX);
-    Serial.print(co2response[6],HEX);
-    Serial.print(co2response[7],HEX);
-    Serial.print(co2response[8],HEX);
-    Serial.println();
-    Serial.println("CRC error: " + String(crc));
-  } else {
-    unsigned int responseHigh = (unsigned int) co2response[2];
-    unsigned int responseLow = (unsigned int) co2response[3];
-    unsigned int ppm = (256*responseHigh) + responseLow;
+  int ppm = ReadCO2PPM();
+  if(ppm < 0){
+    Serial.println("No CO2 valid response");
+  }else{
     Serial.print("CO2: ");
     Serial.print(ppm);
     Serial.println(" ppm");
   }
+
   Serial.println();
 }
