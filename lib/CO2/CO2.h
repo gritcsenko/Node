@@ -8,6 +8,7 @@ byte co2Header[2] = { 0xFF, 0x86 };
 void SwitchToCO2(){
   delay(50);
   Serial.pins(2, 3);
+  Serial.setTimeout(300);
   delay(50);
 }
 
@@ -52,29 +53,25 @@ void SendRequest(){
 int ReadCO2PPM(){
   Serial.flush();
 
-  size_t count = 0;
-  while (count < 9) {
-    SwitchToCO2();
+  SwitchToCO2();
+  SendRequest();
+  memset(co2response, 0, 9);
+  int tries = 5;
+  while (!Serial.find(co2Header, 2) && tries >= 0) {
     SendRequest();
-
-    memset(co2response, 0, 9);
-    int tries = 5;
-    while (!Serial.find(co2Header, 2) && tries >= 0) {
-      SendRequest();
-      tries--;
-      delay(50);
-    }
-    if(tries < 0){
-      SwitchToUSB();
-      return -1;
-    }
-
-    //copy header
-    for(int i = 0; i < 2; i++) co2response[i] = co2Header[i];
-
-    count = Serial.readBytes(co2response + 2, 9);
-    SwitchToUSB();
+    tries--;
   }
+  if(tries < 0){
+    SwitchToUSB();
+    return -1;
+  }
+
+  //copy header
+  for(int i = 0; i < 2; i++) co2response[i] = co2Header[i];
+
+  Serial.readBytes(co2response + 2, 7);
+  SwitchToUSB();
+
 
   if ( CheckCrc() ) {
     unsigned int responseHigh = (unsigned int) co2response[2];

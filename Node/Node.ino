@@ -122,7 +122,7 @@ void loop() {
   Serial.print("e omega[hPa]: "); Serial.println(e_omega);
   double e = RH*e_omega/100;
   double AH = e/(Rv*T);
-  double m = AH*V*1000000.0;
+  double m = AH*V*100000.0;
 
   Serial.print("Water mass[mg]: "); Serial.println(m);
 
