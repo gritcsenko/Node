@@ -23,6 +23,8 @@ using namespace ArduinoJson::Internals;
 
 SI7021 sensor;
 Adafruit_BMP085 bmp;
+StaticJsonBuffer<200> jsonBuffer;
+
 
 void setup() {
 
@@ -112,14 +114,20 @@ void loop() {
   Serial.print("Temp: "); Serial.print(t);
   Serial.print("\tHum: "); Serial.println(RH);
 
-  double P = bmp.readPressure() / 100.0;
-  Serial.print("Temp: "); Serial.print(bmp.readTemperature()); // Celsius
+  int32_t p = bmp.readPressure();
+  double P = p / 100.0;
+  double bmpTemp = bmp.readTemperature();
+  Serial.print("Temp: "); Serial.print(bmpTemp); // Celsius
   Serial.print("\tPressure: "); Serial.println(P); // Gecto Pascals
+
+  int humudutyTempWeight = 1;
+  int pressureTempWeight = 1;
+  double temperature = (t * humudutyTempWeight + bmpTemp * pressureTempWeight) / (humudutyTempWeight + pressureTempWeight);
 
   double V = 1.0;
   double Rv = 461.5;
 
-  double T = 273.15 + t;
+  double T = 273.15 + temperature;
   double e_omega_t = 6.112*exp((17.62*T - 4812.903)/(T - 30.03));
   double f = 1.0016 + 0.00000315*P - 0.074/P;
   double e_omega = e_omega_t*f;
@@ -139,5 +147,30 @@ void loop() {
     Serial.println(" ppm");
   }
 
+  JsonObject& root = jsonBuffer.createObject();
+  root["time"] = currentTime;
+  root["temperature"] = temperature;
+  root["pressure"] = P;
+  root["humidity"] = RH;
+  root.printTo(Serial);
+  char dirName[12];
+  sprintf(dirName, 12, "/%.4i/%.2i/%.2i", tmYearToCalendar(tm.Year), tm.Month, tm.Day)
+  char fileName[25];
+  sprintf(fileName, 25, "/%s/%.2i.csv", dirName, tm.Hour)
+
+  File dataFile;
+  if(!SD.exists(fileName)){
+    if(!SD.mkdir(dirName)){
+      Serial.printf("Failed to create directory %s\r\n", dirName);
+      return;
+    }
+    dataFile = SD.open(buffer, O_WRITE | O_CREAT);
+  }else{
+    dataFile = SD.open(buffer, O_WRITE);
+  }
+
+  dataFile.seek(dataFile.size());
+  dataFile.printf("%i;%i;%i;%.2f;%i;%i\r\n", currentTime, thc.celsiusHundredths, thc.humidityPercent, bmpTemp, p, ppm);
+  dataFile.close();
   Serial.println();
 }
