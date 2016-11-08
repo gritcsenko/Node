@@ -9,6 +9,10 @@
 #include <SI7021.h>
 #include <Adafruit_BMP085.h>
 
+#include <ArduinoJson.h>
+
+using namespace ArduinoJson::Internals;
+
 #include "..\lib\CO2\CO2.h"
 #include "..\lib\Storage\Storage.h"
 #include "..\lib\Settings\Settings.h"
