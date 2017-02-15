@@ -26,6 +26,44 @@ using namespace ArduinoJson::Internals;
 SI7021 sensor;
 Adafruit_BMP085 bmp;
 StaticJsonBuffer<200> jsonBuffer;
+MqttConnector* mqttConnector = NULL;
+
+JsonObject* sensorsData;
+
+void register_receive_hooks(MqttConnector* mqtt)
+{
+
+}
+
+void register_publish_hooks(MqttConnector* mqtt)
+{
+  mqtt->on_prepare_data_once([&](void) {
+    sensorsData = NULL;
+  });
+
+  mqtt->on_before_prepare_data([&](void) {
+    read_sensor();
+  });
+
+  mqtt->on_prepare_data([&](JsonObject * root) {
+    JsonObject& data = (*root)["d"];
+    //JsonObject& info = (*root)["info"];
+
+    data["time"] = sensorsData->get("time");
+    data["temperature"] = sensorsData->get("temperature");
+    data["pressure"] = sensorsData->get("pressure");
+    data["humidity"] = sensorsData->get("humidity");
+
+  }, PUBLISH_EVERY);
+
+  mqtt->on_after_prepare_data([&](JsonObject * root) {
+    /**************
+      JsonObject& data = (*root)["d"];
+      data.remove("version");
+      data.remove("subscription");
+    **************/
+  });
+}
 
 
 void setup() {
@@ -56,18 +94,37 @@ void setup() {
     ESP.restart();
   }
 
-  if (InitWifi(*settingsRoot)) {
-    InitOTA();
+  if (InitWifiSta(*settingsRoot)) {
+    if(!InitOTA(*settingsRoot)){
+      Serial.println("Failed to start OTA listener");
+      Serial.println("Rebooting...");
+      delay(5000);
+      ESP.restart();
+    }
   }else{
     Serial.println("Rebooting...");
     delay(5000);
     ESP.restart();
   }
 
-  if(!SyncTime())
+  if(!SyncTime(*settingsRoot))
   {
     Serial.println("Failed to sync time!");
   }
+
+  Serial.print("Initializing MQTT... ");
+  mqttConnector = init_mqtt(*settingsRoot, register_publish_hooks, register_receive_hooks)
+  if(mqttConnector == NULL){
+    Serial.println("Failed to initialize MQTT");
+    Serial.println("Rebooting...");
+    delay(5000);
+    ESP.restart();
+  }
+
+  publish_hooks(mqtt);
+  receive_hooks(mqtt);
+
+  mqtt->connect();
 
   //if(!InitNRF()){
   //  Serial.println("NRF Initialization failed");
@@ -171,6 +228,8 @@ void loop() {
   root["pressure"] = P;
   root["humidity"] = RH;
   root.printTo(Serial);
+  sensorsData = &root;
+
   char dirName[12];
   sprintf(dirName, "/%.4i/%.2i/%.2i", tmYearToCalendar(tm.Year), tm.Month, tm.Day);
   char fileName[25];

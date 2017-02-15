@@ -1,0 +1,26 @@
+{
+  "wifi" : {
+    "sta" : {
+      "ssid" : "SsId",
+      "password" : "PaS$w0rD"
+    },
+    "ota" : {
+      "hostName" : "esp8266",
+      "port" : 8266
+    }
+  },
+  "ntp" : {
+    "poolServer" : "europe.pool.ntp.org",
+    "timeOffset" : 7200,
+    "updateInterval" : 60000,
+    "localPort" : 1337
+  },
+  "mqtt" : {
+    "host" : "mqtt.cmmc.io",
+    "port" : 1883,
+    "channelPrefix" : "CMMC",
+    "clientId" : "SomeId",
+    "userName" : "user",
+    "password" : "PaS$w0rD"
+  }
+}

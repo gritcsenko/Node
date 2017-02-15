@@ -1,9 +1,15 @@
+#include <ArduinoJson.h>
+#include <ArduinoOTA.h>
 
-
-bool InitOTA()
+bool InitOTA(JsonObject& settingsRoot)
 {
-  ArduinoOTA.setPort(8266);
-  ArduinoOTA.setHostname("esp8266");
+  JsonObject& wifi_ota = settingsRoot["wifi"]["ota"].as<JsonObject&>();
+  if(!wifi_ota.success())
+  {
+      return false;
+  }
+  ArduinoOTA.setPort(wifi_ota["port"].as<int>());
+  ArduinoOTA.setHostname(wifi_ota["hostName"].as<char*>());
   ArduinoOTA.onStart([]() {
     String type;
     //if (ArduinoOTA.getCommand() == U_FLASH)

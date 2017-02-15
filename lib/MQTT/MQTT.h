@@ -1,8 +1,15 @@
 #include <MqttConnector.h>
+#include <ArduinoJson.h>
 
-MqttConnector* init_mqtt(String host, int port, String channelPrefix, String userName, String password, String& clientId, std::function<void(MqttConnector*)> publish_hooks, std::function<void(MqttConnector*)> receive_hooks)
+MqttConnector* init_mqtt(JsonObject& settingsRoot, std::function<void(MqttConnector*)> publish_hooks, std::function<void(MqttConnector*)> receive_hooks)
 {
-  MqttConnector* mqtt = new MqttConnector(host.c_str(), port);
+  JsonObject& json = settingsRoot["mqtt"].as<JsonObject&>();
+  if(!json.success())
+  {
+      return NULL;
+  }
+
+  MqttConnector* mqtt = new MqttConnector(json["host"].as<char*>(), json["port"].as<int>());
 
   mqtt->on_connecting([&](int counter, bool * flag) {
     MQTT_DEBUG_PRINTLN("[%lu] MQTT CONNECTING.. ", counter);
@@ -12,10 +19,11 @@ MqttConnector* init_mqtt(String host, int port, String channelPrefix, String use
     delay(1000);
   });
 
+  //String clientId;
   mqtt->on_prepare_configuration([&](MqttConnector::Config * config) -> void {
-    clientId = ESP.getChipId();
-    config->clientId  = clientId;
-    config->channelPrefix = channelPrefix;
+    //clientId = ESP.getChipId();
+    config->clientId  = String(json["clientId"].as<char*>());
+    config->channelPrefix = String(json["channelPrefix"].as<char*>());
     config->enableLastWill = true;
     config->retainPublishMessage = true;
     /*
@@ -29,8 +37,8 @@ MqttConnector* init_mqtt(String host, int port, String channelPrefix, String use
     config->mode = MODE_BOTH;
     config->firstCapChannel = false;
 
-    config->username = String(userName);
-    config->password = String(password);
+    config->username = String(json["userName"].as<char*>());
+    config->password = String(json["password"].as<char*>());
 
     // FORMAT
     // d:quickstart:<type-id>:<device-id>
@@ -45,8 +53,5 @@ MqttConnector* init_mqtt(String host, int port, String channelPrefix, String use
     MQTT_DEBUG_PRINTLN("[USER] SUB  = %s", config.topicSub.c_str());
   });
 
-  publish_hooks(mqtt);
-  receive_hooks(mqtt);
-
-  mqtt->connect();
+  return mqtt;
 }

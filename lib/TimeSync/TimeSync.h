@@ -1,5 +1,7 @@
+#include <ArduinoJson.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
+#include <ESP8266WiFi.h>
 
 #include <TimeLib.h>
 
@@ -26,7 +28,7 @@ void PrintWireStatus(byte status)
 }
 
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", (2) * SECS_PER_HOUR);
+NTPClient* timeClient = NULL;
 DS3232RTC Clock;
 
 void print2digits(int number) {
@@ -64,7 +66,7 @@ void displayTime(){
 
 time_t getNtpTime()
 {
-  return timeClient.getEpochTime();
+  return timeClient->getEpochTime();
 }
 
 uint8_t dec2bcd(uint8_t n)
@@ -74,8 +76,14 @@ uint8_t dec2bcd(uint8_t n)
 
 #define MaxTries 3
 
-bool SyncTime()
+bool SyncTime(JsonObject& settingsRoot)
 {
+  JsonObject& ntp = settingsRoot["ntp"].as<JsonObject&>();
+  if(!ntp.success())
+  {
+      return false;
+  }
+
   Clock.squareWave(SQWAVE_NONE);
 
   if(WiFi.getMode() == WIFI_OFF){
@@ -87,7 +95,8 @@ bool SyncTime()
   }
   Serial.println("Syncing time...");
 
-  timeClient.begin();
+  timeClient = new NTPClient(ntpUDP, ntp["poolServer"].as<char*>(), ntp["timeOffset"].as<int>(), ntp["updateInterval"].as<int>());
+  timeClient->begin(ntp["localPort"].as<int>());
   int tries = 0;
   while(true) {
     tries++;
@@ -95,7 +104,7 @@ bool SyncTime()
       break;
     }
     Serial.println("Updating NTP time...");
-    if(timeClient.forceUpdate()){
+    if(timeClient->forceUpdate()){
       break;
     }
     delay(1000);
@@ -110,7 +119,7 @@ bool SyncTime()
 
   Serial.print("Got NTP time: ");
 
-  time_t ntpTime = timeClient.getEpochTime();
+  time_t ntpTime = getNtpTime();
   setTime(ntpTime);
   tmElements_t tm;
   breakTime(ntpTime, tm);
