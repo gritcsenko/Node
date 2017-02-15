@@ -19,7 +19,7 @@ using namespace ArduinoJson::Internals;
 #include "..\lib\OTA\OTA.h"
 #include "..\lib\Wifi\Wifi.h"
 #include "..\lib\TimeSync\TimeSync.h"
-#include "..\lib\NRF\NRF.h"
+//#include "..\lib\NRF\NRF.h"
 
 SI7021 sensor;
 Adafruit_BMP085 bmp;
@@ -51,9 +51,9 @@ void setup() {
     Serial.println("Failed to sync time!");
   }
 
-  if(!InitNRF()){
-    Serial.println("NRF Initialization failed");
-  }
+  //if(!InitNRF()){
+  //  Serial.println("NRF Initialization failed");
+  //}
 
   Serial.print("Initializing SI7021 sensor... ");
   sensor.begin(SDA, SCL);
@@ -154,9 +154,9 @@ void loop() {
   root["humidity"] = RH;
   root.printTo(Serial);
   char dirName[12];
-  sprintf(dirName, 12, "/%.4i/%.2i/%.2i", tmYearToCalendar(tm.Year), tm.Month, tm.Day)
+  sprintf(dirName, "/%.4i/%.2i/%.2i", tmYearToCalendar(tm.Year), tm.Month, tm.Day);
   char fileName[25];
-  sprintf(fileName, 25, "/%s/%.2i.csv", dirName, tm.Hour)
+  sprintf(fileName, "/%s/%.2i.csv", dirName, tm.Hour);
 
   File dataFile;
   if(!SD.exists(fileName)){
@@ -164,9 +164,9 @@ void loop() {
       Serial.printf("Failed to create directory %s\r\n", dirName);
       return;
     }
-    dataFile = SD.open(buffer, O_WRITE | O_CREAT);
+    dataFile = SD.open(fileName, O_WRITE | O_CREAT);
   }else{
-    dataFile = SD.open(buffer, O_WRITE);
+    dataFile = SD.open(fileName, O_WRITE);
   }
 
   dataFile.seek(dataFile.size());

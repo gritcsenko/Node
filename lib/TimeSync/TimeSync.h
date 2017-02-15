@@ -27,7 +27,7 @@ void PrintWireStatus(byte status)
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", (2) * SECS_PER_HOUR);
-DS3232RTC RTC;
+DS3232RTC Clock;
 
 void print2digits(int number) {
   if (number >= 0 && number < 10) {
@@ -76,11 +76,11 @@ uint8_t dec2bcd(uint8_t n)
 
 bool SyncTime()
 {
-  RTC.squareWave(SQWAVE_NONE);
+  Clock.squareWave(SQWAVE_NONE);
 
   if(WiFi.getMode() == WIFI_OFF){
     Serial.println("WiFi is off. No NTP time!");
-    setSyncProvider(RTC.get);
+    setSyncProvider(Clock.get);
     Serial.print("Current RTC time: ");
     displayTime();
     return true;
@@ -102,7 +102,7 @@ bool SyncTime()
   }
   if(tries > MaxTries){
     Serial.println("Failed to update NTP time");
-    setSyncProvider(RTC.get);
+    setSyncProvider(Clock.get);
     Serial.print("Current RTC time: ");
     displayTime();
     return true;
@@ -124,7 +124,7 @@ bool SyncTime()
     }
 
     Serial.print("Updating RTC time... ");
-    byte setResult = RTC.write(tm);
+    byte setResult = Clock.write(tm);
     PrintWireStatus(setResult);
     if(setResult == 0){
       break;
@@ -136,7 +136,7 @@ bool SyncTime()
     Serial.println("Failed to update RTC time");
     setSyncProvider(getNtpTime);
   }else{
-    setSyncProvider(RTC.get);
+    setSyncProvider(Clock.get);
   }
 
   return true;
