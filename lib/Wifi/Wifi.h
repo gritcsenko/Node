@@ -1,15 +1,14 @@
 #include <ESP8266WiFi.h>
-const char *ssid     = "AsusRT-N56U";
-const char *password = "R2d2c3po!";
+#include <ArduinoJson.h>
 
-bool InitWifi()
+bool InitWifi(JsonObject& settingsRoot)
 {
   Serial.print("Connecting to WIFI ");
-  Serial.print(ssid);
+  Serial.print(settingsRoot["wifi"]["ssid"].as<char*>());
   Serial.println("...");
 
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+  WiFi.begin(settingsRoot["wifi"]["ssid"].as<char*>(), settingsRoot["wifi"]["password"].as<char*>());
 
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.println("Connection Failed!");

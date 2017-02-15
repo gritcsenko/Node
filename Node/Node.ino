@@ -10,6 +10,7 @@
 #include <Adafruit_BMP085.h>
 
 #include <ArduinoJson.h>
+#include <MqttConnector.h>
 
 using namespace ArduinoJson::Internals;
 
@@ -19,6 +20,7 @@ using namespace ArduinoJson::Internals;
 #include "..\lib\OTA\OTA.h"
 #include "..\lib\Wifi\Wifi.h"
 #include "..\lib\TimeSync\TimeSync.h"
+#include "..\lib\MQTT\MQTT.h"
 //#include "..\lib\NRF\NRF.h"
 
 SI7021 sensor;
@@ -38,12 +40,28 @@ void setup() {
 
   InitSD();
 
-  if (InitWifi()) {
+  JsonObject* settingsRoot = LoadSettings();
+  if(settingsRoot == NULL)
+  {
+    Serial.println("Settings file ./settings.json is missing");
+    Serial.println("Rebooting...");
+    delay(5000);
+    ESP.restart();
+  }
+  if(!settingsRoot->success())
+  {
+    Serial.println("Settings file ./settings.json contains wrong JSON");
+    Serial.println("Rebooting...");
+    delay(5000);
+    ESP.restart();
+  }
+
+  if (InitWifi(*settingsRoot)) {
     InitOTA();
   }else{
-    //Serial.println("Rebooting...");
-    //delay(5000);
-    //ESP.restart();
+    Serial.println("Rebooting...");
+    delay(5000);
+    ESP.restart();
   }
 
   if(!SyncTime())
