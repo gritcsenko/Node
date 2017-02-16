@@ -21,6 +21,8 @@
     "channelPrefix" : "CMMC",
     "clientId" : "SomeId",
     "userName" : "user",
-    "password" : "PaS$w0rD"
+    "password" : "PaS$w0rD",
+    "publishPeriod" : 30000,
+    "deviceName" : "esp8266#1"
   }
 }

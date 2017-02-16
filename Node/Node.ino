@@ -32,72 +32,10 @@ JsonObject* sensorsData = NULL;
 
 void register_receive_hooks(MqttConnector* mqtt)
 {
-  mqtt->on_subscribe([&](MQTT::Subscribe * sub) -> void {
-    Serial.printf("myName = %s \r\n", myName);
-    sub->add_topic(MQTT_PREFIX + "/" + myName + "/$/+");
-    sub->add_topic(MQTT_PREFIX + "/" + MQTT_CLIENT_ID + "/$/+");
-  });
-
-  mqtt->on_before_message_arrived_once([&](void) {
-    pinMode(15, OUTPUT);
-  });
-
-  mqtt->on_message([&](const MQTT::Publish & pub) { });
-
-  mqtt->on_after_message_arrived([&](String topic, String cmd, String payload) {
-    Serial.printf("topic: %s\r\n", topic.c_str());
-    Serial.printf("cmd: %s\r\n", cmd.c_str());
-    Serial.printf("payload: %s\r\n", payload.c_str());
-    if (cmd == "$/command") {
-      if (payload == "ON") {
-        digitalWrite(relayPin, HIGH);
-        digitalWrite(LED_BUILTIN, LOW);
-        pin_state = 1;
-      }
-      else if (payload == "OFF") {
-        digitalWrite(relayPin, LOW);
-        digitalWrite(LED_BUILTIN, HIGH);
-        pin_state = 0;
-      }
-    }
-    else if (cmd == "$/reboot") {
-      ESP.reset();
-    }
-    else {
-
-    }
-  });
 }
 
 void register_publish_hooks(MqttConnector* mqtt)
 {
-  mqtt->on_prepare_data_once([&](void) {
-    sensorsData = NULL;
-  });
-
-  mqtt->on_before_prepare_data([&](void) {
-    read_sensor();
-  });
-
-  mqtt->on_prepare_data([&](JsonObject * root) {
-    JsonObject& data = (*root)["d"];
-    //JsonObject& info = (*root)["info"];
-
-    data["time"] = (*sensorsData)["time"].as<long>();
-    data["temperature"] = (*sensorsData)["temperature"].as<double>();
-    data["pressure"] = (*sensorsData)["pressure"].as<double>();
-    data["humidity"] = (*sensorsData)["humidity"].as<int>();
-    data["ppm"] = (*sensorsData)["ppm"].as<int>();
-
-  }, PUBLISH_EVERY);
-
-  mqtt->on_after_prepare_data([&](JsonObject * root) {
-    /**************
-      JsonObject& data = (*root)["d"];
-      data.remove("version");
-      data.remove("subscription");
-    **************/
-  });
 }
 
 
@@ -148,7 +86,7 @@ void setup() {
   }
 
   Serial.print("Initializing MQTT... ");
-  mqttConnector = init_mqtt(*settingsRoot, register_publish_hooks, register_receive_hooks)
+  mqttConnector = init_mqtt(*settingsRoot, register_publish_hooks, register_receive_hooks);
   if(mqttConnector == NULL){
     Serial.println("Failed to initialize MQTT");
     Serial.println("Rebooting...");
@@ -156,10 +94,73 @@ void setup() {
     ESP.restart();
   }
 
-  publish_hooks(mqtt);
-  receive_hooks(mqtt);
+  JsonObject& mqttJson = (*settingsRoot)["mqtt"].as<JsonObject&>();
 
-  mqtt->connect();
+// mqtt publish
+  mqttConnector->on_prepare_data_once([&](void) {
+    sensorsData = NULL;
+  });
+
+  mqttConnector->on_before_prepare_data([&](void) {
+    //read_sensor();
+  });
+
+  mqttConnector->on_prepare_data([&](JsonObject * root) {
+    JsonObject& data = (*root)["d"];
+    //JsonObject& info = (*root)["info"];
+
+    data["time"] = (*sensorsData)["time"].as<long>();
+    data["temperature"] = (*sensorsData)["temperature"].as<double>();
+    data["pressure"] = (*sensorsData)["pressure"].as<double>();
+    data["humidity"] = (*sensorsData)["humidity"].as<int>();
+    data["ppm"] = (*sensorsData)["ppm"].as<int>();
+
+  }, mqttJson["publishPeriod"].as<int>());
+
+  mqttConnector->on_after_prepare_data([&](JsonObject * root) {
+    /**************
+      JsonObject& data = (*root)["d"];
+      data.remove("version");
+      data.remove("subscription");
+    **************/
+  });
+// mqtt receive
+  mqttConnector->on_subscribe([&](MQTT::Subscribe * sub) -> void {
+    sub->add_topic(mqttJson["channelPrefix"].as<char*>() + String("/") + mqttJson["deviceName"].as<char*>() + String("/$/+"));
+    sub->add_topic(mqttJson["channelPrefix"].as<char*>() + String("/") + mqttJson["clientId"].as<char*>() + String("/$/+"));
+  });
+
+  mqttConnector->on_before_message_arrived_once([&](void) {
+    pinMode(15, OUTPUT);
+  });
+
+  mqttConnector->on_message([&](const MQTT::Publish & pub) { });
+
+  mqttConnector->on_after_message_arrived([&](String topic, String cmd, String payload) {
+    Serial.printf("topic: %s\r\n", topic.c_str());
+    Serial.printf("cmd: %s\r\n", cmd.c_str());
+    Serial.printf("payload: %s\r\n", payload.c_str());
+    if (cmd == "$/command") {
+      if (payload == "ON") {
+        //digitalWrite(relayPin, HIGH);
+        //digitalWrite(LED_BUILTIN, LOW);
+        //pin_state = 1;
+      }
+      else if (payload == "OFF") {
+        //digitalWrite(relayPin, LOW);
+        //digitalWrite(LED_BUILTIN, HIGH);
+        //pin_state = 0;
+      }
+    }
+    else if (cmd == "$/reboot") {
+      ESP.reset();
+    }
+    else {
+
+    }
+  });
+
+  mqttConnector->connect();
 
   //if(!InitNRF()){
   //  Serial.println("NRF Initialization failed");
