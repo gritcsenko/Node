@@ -28,7 +28,7 @@ Adafruit_BMP085 bmp;
 StaticJsonBuffer<200> jsonBuffer;
 MqttConnector* mqttConnector = NULL;
 
-JsonObject* sensorsData;
+JsonObject* sensorsData = NULL;
 
 void register_receive_hooks(MqttConnector* mqtt)
 {
@@ -83,11 +83,11 @@ void register_publish_hooks(MqttConnector* mqtt)
     JsonObject& data = (*root)["d"];
     //JsonObject& info = (*root)["info"];
 
-    data["time"] = sensorsData->get("time");
-    data["temperature"] = sensorsData->get("temperature");
-    data["pressure"] = sensorsData->get("pressure");
-    data["humidity"] = sensorsData->get("humidity");
-    data["ppm"] = sensorsData->get("ppm");
+    data["time"] = (*sensorsData)["time"].as<long>();
+    data["temperature"] = (*sensorsData)["temperature"].as<double>();
+    data["pressure"] = (*sensorsData)["pressure"].as<double>();
+    data["humidity"] = (*sensorsData)["humidity"].as<int>();
+    data["ppm"] = (*sensorsData)["ppm"].as<int>();
 
   }, PUBLISH_EVERY);
 
@@ -213,10 +213,10 @@ void loop() {
   displayTime();
 
   tmElements_t tm;
-  RTC.read(tm);
+  Clock.read(tm);
   Serial.print("RTC:      ");
   displayTime(tm);
-  Serial.print("Timer Temp: "); Serial.println(RTC.temperature()/4.0);
+  Serial.print("Timer Temp: "); Serial.println(Clock.temperature()/4.0);
 
   si7021_thc thc = sensor.getTempAndRH();
   double t = thc.celsiusHundredths / 100.0;
@@ -267,14 +267,15 @@ void loop() {
   sensorsData = &root;
 
   char dirName[12];
-  sprintf(dirName, "/%.4i/%.2i/%.2i", tmYearToCalendar(tm.Year), tm.Month, tm.Day);
+  snprintf(dirName, 12, "/%.4i/%.2i/%.2i", tmYearToCalendar(tm.Year), tm.Month, tm.Day);
   char fileName[25];
-  sprintf(fileName, "/%s/%.2i.csv", dirName, tm.Hour);
+  snprintf(fileName, 25, "/%s/%.2i.csv", dirName, tm.Hour);
 
   File dataFile;
   if(!SD.exists(fileName)){
     if(!SD.mkdir(dirName)){
-      Serial.printf("Failed to create directory %s\r\n", dirName);
+      Serial.print("Failed to create directory ");
+      Serial.println(dirName);
       return;
     }
     dataFile = SD.open(fileName, O_WRITE | O_CREAT);
@@ -283,7 +284,9 @@ void loop() {
   }
 
   dataFile.seek(dataFile.size());
-  dataFile.printf("%i;%i;%i;%.2f;%i;%i\r\n", currentTime, thc.celsiusHundredths, thc.humidityPercent, bmpTemp, p, ppm);
+  char data[100];
+  snprintf(data, 100, "%i;%i;%i;%.2f;%i;%i\r\n", currentTime, thc.celsiusHundredths, thc.humidityPercent, bmpTemp, p, ppm);
+  dataFile.write(data, 100);
   dataFile.close();
   Serial.println();
 }
