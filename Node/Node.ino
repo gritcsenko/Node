@@ -126,8 +126,8 @@ void setup() {
   });
 // mqtt receive
   mqttConnector->on_subscribe([&](MQTT::Subscribe * sub) -> void {
-    sub->add_topic(mqttJson["channelPrefix"].as<char*>() + String("/") + mqttJson["deviceName"].as<char*>() + String("/$/+"));
-    sub->add_topic(mqttJson["channelPrefix"].as<char*>() + String("/") + mqttJson["clientId"].as<char*>() + String("/$/+"));
+    sub->add_topic(mqttJson["channelPrefix"].as<String>() + "/" + mqttJson["deviceName"].as<char*>() + "/$/+");
+    sub->add_topic(mqttJson["channelPrefix"].as<String>() + "/" + mqttJson["clientId"].as<char*>() + "/$/+");
   });
 
   mqttConnector->on_before_message_arrived_once([&](void) {

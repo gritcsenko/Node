@@ -22,8 +22,8 @@ MqttConnector* init_mqtt(JsonObject& settingsRoot, std::function<void(MqttConnec
   //String clientId;
   mqtt->on_prepare_configuration([&](MqttConnector::Config * config) -> void {
     //clientId = ESP.getChipId();
-    config->clientId  = String(json["clientId"].as<char*>());
-    config->channelPrefix = String(json["channelPrefix"].as<char*>());
+    config->clientId  = json["clientId"].as<String>();
+    config->channelPrefix = json["channelPrefix"].as<String>();
     config->enableLastWill = true;
     config->retainPublishMessage = true;
     /*
@@ -37,8 +37,8 @@ MqttConnector* init_mqtt(JsonObject& settingsRoot, std::function<void(MqttConnec
     config->mode = MODE_BOTH;
     config->firstCapChannel = false;
 
-    config->username = String(json["userName"].as<char*>());
-    config->password = String(json["password"].as<char*>());
+    config->username = json["userName"].as<String>();
+    config->password = json["password"].as<String>();
 
     // FORMAT
     // d:quickstart:<type-id>:<device-id>
