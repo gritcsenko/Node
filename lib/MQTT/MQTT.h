@@ -1,7 +1,7 @@
 #include <MqttConnector.h>
 #include <ArduinoJson.h>
 
-MqttConnector* init_mqtt(JsonObject& settingsRoot, std::function<void(MqttConnector*)> publish_hooks, std::function<void(MqttConnector*)> receive_hooks)
+MqttConnector* init_mqtt(JsonObject& settingsRoot)
 {
   JsonObject& json = settingsRoot["mqtt"].as<JsonObject&>();
   if(!json.success())

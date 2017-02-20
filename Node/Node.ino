@@ -32,15 +32,6 @@ MqttConnector* mqttConnector = NULL;
 
 JsonObject* sensorsData = NULL;
 
-void register_receive_hooks(MqttConnector* mqtt)
-{
-}
-
-void register_publish_hooks(MqttConnector* mqtt)
-{
-}
-
-
 void setup() {
 
   Serial.begin(9600);
@@ -115,7 +106,7 @@ void setup() {
   }
 
   Serial.print("Initializing MQTT... ");
-  mqttConnector = init_mqtt(*settingsRoot, register_publish_hooks, register_receive_hooks);
+  mqttConnector = init_mqtt(*settingsRoot);
   if(mqttConnector == NULL){
     Serial.println("Failed to initialize MQTT");
     Serial.println("Rebooting...");
