@@ -14,6 +14,8 @@
 
 using namespace ArduinoJson::Internals;
 
+
+#include "..\lib\SPIFFS\SPIFFS.h"
 #include "..\lib\CO2\CO2.h"
 #include "..\lib\Storage\Storage.h"
 #include "..\lib\Settings\Settings.h"
@@ -49,22 +51,49 @@ void setup() {
   Wire.begin();
   SPI.begin();
 
+  JsonObject* settingsRoot = NULL;
+
+  Serial.println("Mounting SPIFFS...");
+  if (spiffs::Mount()) {
+    Serial.println("Loading SPIFFS config...");
+    settingsRoot = spiffs::LoadSettings(settingsFileName);
+    if(settingsRoot == NULL)
+    {
+      Serial.print("Settings file ");
+      Serial.print(settingsFileName);
+      Serial.println(" is missing");
+    }
+    if(!settingsRoot->success())
+    {
+      Serial.print("Settings file ");
+      Serial.print(settingsFileName);
+      Serial.println(" contains wrong JSON");
+      settingsRoot = NULL;
+    }
+  }else{
+    Serial.println("Failed to mount SPIFFS");
+  }
+
   InitSD();
 
-  JsonObject* settingsRoot = LoadSettings();
-  if(settingsRoot == NULL)
-  {
-    Serial.println("Settings file ./settings.json is missing");
-    Serial.println("Rebooting...");
-    delay(5000);
-    ESP.restart();
-  }
-  if(!settingsRoot->success())
-  {
-    Serial.println("Settings file ./settings.json contains wrong JSON");
-    Serial.println("Rebooting...");
-    delay(5000);
-    ESP.restart();
+  if(settingsRoot == NULL){
+    Serial.println("Loading SD config...");
+    JsonObject* settingsRoot = LoadSettings();
+    if(settingsRoot == NULL)
+    {
+      Serial.println("Rebooting...");
+      delay(5000);
+      ESP.restart();
+    }
+    if(!settingsRoot->success())
+    {
+      Serial.print("Settings file ");
+      Serial.print(settingsFileName);
+      Serial.println(" contains wrong JSON");
+      Serial.println("Rebooting...");
+      delay(5000);
+      ESP.restart();
+    }
   }
 
   if (InitWifiSta(*settingsRoot)) {
