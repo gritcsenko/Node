@@ -2,7 +2,9 @@
 #include <ArduinoOTA.h>
 #include <SPI.h>
 #include <Wire.h>
-#include <SD.h>
+
+#include <SdFat.h>
+#include <FreeStack.h>
 
 #include <ESP8266mDNS.h>
 
@@ -25,12 +27,16 @@ using namespace ArduinoJson::Internals;
 #include "..\lib\MQTT\MQTT.h"
 //#include "..\lib\NRF\NRF.h"
 
+#include "..\lib\Sensors\Sensors.h"
+
 SI7021 sensor;
 Adafruit_BMP085 bmp;
 StaticJsonBuffer<200> jsonBuffer;
 MqttConnector* mqttConnector = NULL;
 
 JsonObject* sensorsData = NULL;
+
+SdFat SD;
 
 void setup() {
 
@@ -63,11 +69,11 @@ void setup() {
     Serial.println("Failed to mount SPIFFS");
   }
 
-  InitSD(false);
+  SD = InitSD(false);
 
   if(settingsRoot == NULL){
     Serial.println("Loading SD config...");
-    JsonObject* settingsRoot = LoadSettings();
+    JsonObject* settingsRoot = LoadSettings(SD);
     if(settingsRoot == NULL)
     {
       Serial.println("Rebooting...");

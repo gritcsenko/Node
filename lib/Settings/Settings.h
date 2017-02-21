@@ -1,7 +1,7 @@
-#include <SD.h>
+#include <SdFat.h>
 #include <ArduinoJson.h>
 
-String settingsFileName = "/settings.jsn";
+String settingsFileName = "/settings.json";
 
 const size_t bufferSize = 3*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(8) + 330;
 //DynamicJsonBuffer jsonRootBuffer(bufferSize); // calculate buffer size here https://bblanchon.github.io/ArduinoJson/assistant/
@@ -9,7 +9,7 @@ const size_t bufferSize = 3*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + JSON_OBJ
 DynamicJsonBuffer jsonRootBuffer;
 char settingsBuf[1024];
 
-JsonObject* LoadSettings(String fileName)
+JsonObject* LoadSettings(SdFat SD, String fileName)
 {
   //if(!SD.exists(fileName))
   //{
@@ -22,7 +22,7 @@ JsonObject* LoadSettings(String fileName)
   Serial.print("Opening settings file ");
   Serial.print(fileName);
   Serial.println(" ...");
-  File settingsFile = SD.open(fileName, FILE_READ);
+  File settingsFile = SD.open(fileName.c_str(), FILE_READ);
   if(!settingsFile)
   {
     Serial.print("Settings file ");
@@ -51,15 +51,15 @@ JsonObject* LoadSettings(String fileName)
   return &rootJson;
 }
 
-JsonObject* LoadSettings(void)
+JsonObject* LoadSettings(SdFat SD)
 {
-    return LoadSettings(settingsFileName);
+    return LoadSettings(SD, settingsFileName);
 }
 
 
-bool SaveSettings(JsonObject& settingsRoot, String fileName)
+bool SaveSettings(SdFat SD, JsonObject& settingsRoot, String fileName)
 {
-  File settingsFile = SD.open(fileName, FILE_WRITE);
+  File settingsFile = SD.open(fileName.c_str(), FILE_WRITE);
   if (!settingsFile) {
     Serial.print("Settings file ");
     Serial.print(fileName);
@@ -74,7 +74,7 @@ bool SaveSettings(JsonObject& settingsRoot, String fileName)
   return true;
 }
 
-bool SaveSettings(JsonObject& settingsRoot)
+bool SaveSettings(SdFat SD, JsonObject& settingsRoot)
 {
-  return SaveSettings(settingsRoot, settingsFileName);
+  return SaveSettings(SD, settingsRoot, settingsFileName);
 }
