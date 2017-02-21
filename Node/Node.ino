@@ -50,22 +50,20 @@ void setup() {
     settingsRoot = spiffs::LoadSettings(settingsFileName);
     if(settingsRoot == NULL)
     {
-      Serial.print("Settings file ");
-      Serial.print(settingsFileName);
-      Serial.println(" is missing");
-    }
-    if(!settingsRoot->success())
-    {
-      Serial.print("Settings file ");
-      Serial.print(settingsFileName);
-      Serial.println(" contains wrong JSON");
-      settingsRoot = NULL;
+    }else{
+      if(!settingsRoot->success())
+      {
+        Serial.print("Settings file ");
+        Serial.print(settingsFileName);
+        Serial.println(" contains wrong JSON");
+        settingsRoot = NULL;
+      }
     }
   }else{
     Serial.println("Failed to mount SPIFFS");
   }
 
-  InitSD();
+  InitSD(false);
 
   if(settingsRoot == NULL){
     Serial.println("Loading SD config...");

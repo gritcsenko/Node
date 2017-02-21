@@ -1,13 +1,11 @@
 {
-  "wifi" : {
-    "sta" : {
-      "ssid" : "SsId",
-      "password" : "PaS$w0rD"
-    },
-    "ota" : {
-      "hostName" : "esp8266",
-      "port" : 8266
-    }
+  "sta" : {
+    "ssid" : "SsId",
+    "password" : "PaS$w0rD"
+  },
+  "ota" : {
+    "hostName" : "esp8266",
+    "port" : 8266
   },
   "ntp" : {
     "poolServer" : "europe.pool.ntp.org",

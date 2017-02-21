@@ -3,7 +3,7 @@
 
 bool InitOTA(JsonObject& settingsRoot)
 {
-  JsonObject& wifi_ota = settingsRoot["wifi"]["ota"].as<JsonObject&>();
+  JsonObject& wifi_ota = settingsRoot["ota"].as<JsonObject&>();
   if(!wifi_ota.success())
   {
       return false;

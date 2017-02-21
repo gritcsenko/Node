@@ -3,7 +3,7 @@
 
 bool InitWifiSta(JsonObject& settingsRoot)
 {
-  JsonObject& wifi_sta = settingsRoot["wifi"]["sta"].as<JsonObject&>();
+  JsonObject& wifi_sta = settingsRoot["sta"].as<JsonObject&>();
 
   Serial.print("Connecting to WIFI ");
   Serial.print(wifi_sta["ssid"].as<char*>());

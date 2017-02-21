@@ -5,15 +5,15 @@
 
 namespace spiffs
 {
-
-  DynamicJsonBuffer jsonRootBuffer;
+  const size_t bufferSize = 3*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(8) + 330;
+  DynamicJsonBuffer jsonRootBuffer(bufferSize);
 
   bool Mount()
   {
     return SPIFFS.begin();
   }
 
-  bool SaveSettings(JsonObject& settingsRoot, const char* fileName)
+  bool SaveSettings(JsonObject& settingsRoot, String fileName)
   {
     fs::File settingsFile = SPIFFS.open(fileName, "w");
     if (!settingsFile) {
@@ -30,7 +30,7 @@ namespace spiffs
     return true;
   }
 
-  JsonObject* LoadSettings(const char* fileName)
+  JsonObject* LoadSettings(String fileName)
   {
     if(!SPIFFS.exists(fileName))
     {
