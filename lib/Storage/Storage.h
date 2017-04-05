@@ -13,6 +13,7 @@ SdFat InitSD(bool testCard = true)
   if (!sd.begin(D8, SPI_HALF_SPEED)) {
     sd.initErrorHalt();
   }
+  sd.init();
 
   // if(testCard){
   //   Sd2Card card;
