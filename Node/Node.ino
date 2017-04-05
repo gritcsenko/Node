@@ -16,8 +16,6 @@
 
 using namespace ArduinoJson::Internals;
 
-
-#include "..\lib\SPIFFS\SPIFFS.h"
 #include "..\lib\CO2\CO2.h"
 #include "..\lib\Storage\Storage.h"
 #include "..\lib\Settings\Settings.h"
@@ -50,49 +48,11 @@ void setup() {
 
   JsonObject* settingsRoot = NULL;
 
-  Serial.println("Mounting SPIFFS...");
-  if (spiffs::Mount()) {
-    Serial.println("Loading SPIFFS config...");
-    settingsRoot = spiffs::LoadSettings(settingsFileName);
-    if(settingsRoot == NULL)
-    {
-    }else{
-      if(!settingsRoot->success())
-      {
-        Serial.print("Settings file ");
-        Serial.print(settingsFileName);
-        Serial.println(" contains wrong JSON");
-        settingsRoot = NULL;
-      }
-    }
-  }else{
-    Serial.println("Failed to mount SPIFFS");
-  }
-
   SD = InitSD(false);
+  JsonObject& settingsRoot = LoadSettings(SD);
 
-  if(settingsRoot == NULL){
-    Serial.println("Loading SD config...");
-    JsonObject* settingsRoot = LoadSettings(SD);
-    if(settingsRoot == NULL)
-    {
-      Serial.println("Rebooting...");
-      delay(5000);
-      ESP.restart();
-    }
-    if(!settingsRoot->success())
-    {
-      Serial.print("Settings file ");
-      Serial.print(settingsFileName);
-      Serial.println(" contains wrong JSON");
-      Serial.println("Rebooting...");
-      delay(5000);
-      ESP.restart();
-    }
-  }
-
-  if (InitWifiSta(*settingsRoot)) {
-    if(!InitOTA(*settingsRoot)){
+  if (InitWifiSta(settingsRoot)) {
+    if(!InitOTA(settingsRoot)){
       Serial.println("Failed to start OTA listener");
       Serial.println("Rebooting...");
       delay(5000);
@@ -104,13 +64,13 @@ void setup() {
     ESP.restart();
   }
 
-  if(!SyncTime(*settingsRoot))
+  if(!SyncTime(settingsRoot))
   {
     Serial.println("Failed to sync time!");
   }
 
   Serial.print("Initializing MQTT... ");
-  mqttConnector = init_mqtt(*settingsRoot);
+  mqttConnector = init_mqtt(settingsRoot);
   if(mqttConnector == NULL){
     Serial.println("Failed to initialize MQTT");
     Serial.println("Rebooting...");
@@ -118,7 +78,7 @@ void setup() {
     ESP.restart();
   }
 
-  JsonObject& mqttJson = (*settingsRoot)["mqtt"].as<JsonObject&>();
+  JsonObject& mqttJson = settingsRoot["mqtt"].as<JsonObject&>();
 
 // mqtt publish
   mqttConnector->on_prepare_data_once([&](void) {
@@ -297,12 +257,16 @@ void loop() {
   snprintf(fileName, 25, "/%s/%.2i.csv", dirName, tm.Hour);
 
   File dataFile;
-  if(!SD.exists(fileName)){
+  if(!SD.exists(dirName)){
     if(!SD.mkdir(dirName)){
       Serial.print("Failed to create directory ");
       Serial.println(dirName);
       return;
     }
+  }
+
+  if(!SD.exists(fileName))
+  {
     dataFile = SD.open(fileName, O_WRITE | O_CREAT);
   }else{
     dataFile = SD.open(fileName, O_WRITE);

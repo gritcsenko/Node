@@ -5,8 +5,7 @@
 
 namespace spiffs
 {
-  const size_t bufferSize = 3*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(8) + 330;
-  DynamicJsonBuffer jsonRootBuffer(bufferSize);
+  const size_t bufferSize = 2*JSON_OBJECT_SIZE(2) + 2*JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(8) + 330; // calculate buffer size here https://bblanchon.github.io/ArduinoJson/assistant/
 
   bool Mount()
   {
@@ -30,14 +29,14 @@ namespace spiffs
     return true;
   }
 
-  JsonObject* LoadSettings(String fileName)
+  JsonObject& LoadSettings(String fileName)
   {
     if(!SPIFFS.exists(fileName))
     {
       Serial.print("Settings file ");
       Serial.print(fileName);
       Serial.println(" does not exists");
-      return NULL;
+      return JsonObject::invalid();
     }
 
     fs::File settingsFile = SPIFFS.open(fileName, "r");
@@ -46,13 +45,13 @@ namespace spiffs
       Serial.print("Settings file ");
       Serial.print(fileName);
       Serial.println(" exists but cannot be opened");
-      return NULL;
+      return JsonObject::invalid();
     }
 
+    DynamicJsonBuffer jsonRootBuffer(bufferSize);
     JsonObject& root = jsonRootBuffer.parseObject(settingsFile);
-
     settingsFile.close();
 
-    return &root;
+    return root;
   }
 }
